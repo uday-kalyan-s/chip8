@@ -1,5 +1,5 @@
 use crate::emulator::Emulator;
-use rand::{thread_rng, Rng};
+// use rand::{thread_rng, Rng};
 
 // converts characters for a hex value to an integer
 // not sure if i can implement any sort of type inference or generics here so for now it takes an explicit type
@@ -188,7 +188,8 @@ impl Emulator {
 
                 // random number
                 ('c',x,n1,n2) => {
-                    self.registers[intify!(usize,x)] = thread_rng().gen_range(0..u8::MAX) & intify!(u8, n1,n2)
+                    // self.registers[intify!(usize,x)] = thread_rng().gen_range(0..u8::MAX) & intify!(u8, n1,n2)
+                    self.registers[intify!(usize,x)] = fastrand::u8(0..u8::MAX) & intify!(u8, n1,n2);
                 }
 
                 // no matches?

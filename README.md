@@ -1,7 +1,7 @@
 # rust chip 8 emulator
 
 ### dependencies
-- rand
+- fastrand
 
 
 ### instructions implemented
