@@ -1,6 +1,8 @@
 mod emulator;
 mod instructions;
 mod term;
+mod timer;
+
 fn main() {
     let mut emulator = emulator::Emulator::new();
     emulator.load_font("font.txt");

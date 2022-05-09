@@ -31,6 +31,9 @@
 - FX65
 - BNNN
 - CXNN
+- FX15
+- FX07
+- FX18
 
 ### tests
 - [IBM logo](https://github.com/loktar00/chip8/blob/master/roms/IBM%20Logo.ch8)

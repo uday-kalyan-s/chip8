@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::fs;
+use crate::timer::Timer;
 
 pub struct Emulator {
     pub stack: VecDeque<u16>,
@@ -7,6 +8,7 @@ pub struct Emulator {
     pub i: u16,
     pub registers: [u8; 16],
     pub display_data: [[bool; 64]; 32],
+    pub timer: Timer,
 
     // points to current instruction in memory
     pub pc: u16
@@ -20,7 +22,9 @@ impl Emulator {
             i: 0,
             registers: [0; 16],
             pc: 512,
-            display_data: [[false; 64]; 32], 
+            display_data: [[false; 64]; 32],
+            timer: Timer::new()
+
         }
     }
 

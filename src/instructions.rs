@@ -33,6 +33,10 @@ impl Emulator {
     }
 
     pub fn run(&mut self) {
+        // start timer
+        self.timer.run();
+
+        // loop
         loop {
             let inp = self.get_ins();
             match inp {
@@ -192,6 +196,21 @@ impl Emulator {
                 ('c',x,n1,n2) => {
                     // self.registers[dehex(x)] = thread_rng().gen_range(0..u8::MAX) & intify!(u8, n1,n2)
                     self.registers[dehex(x)] = fastrand::u8(0..u8::MAX) & dehexmul::<u8>(vec![n1,n2]);
+                }
+
+                // set delay timer
+                ('f',x,'1','5') => {
+                    self.timer.set_delay(self.registers[dehex(x)]);
+                }
+
+                // get value of timer
+                ('f',x,'0','7') => {
+                    self.registers[dehex(x)] = self.timer.get_delay();
+                }
+
+                // set sound timer
+                ('f',x,'1','8') => {
+                    self.timer.set_sound(self.registers[dehex(x)]);
                 }
 
                 // no matches?
