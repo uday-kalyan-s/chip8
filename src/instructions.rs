@@ -1,18 +1,20 @@
+use std::fmt::Debug;
+
 use crate::emulator::Emulator;
 // use rand::{thread_rng, Rng};
 
-// converts characters for a hex value to an integer
-// not sure if i can implement any sort of type inference or generics here so for now it takes an explicit type
-macro_rules! intify {
-    ($typ: ty, $($x: expr), *) => {
-        {
-            let mut intval = 0;
-            $(
-                intval = (intval * 16) + $x.to_digit(16).unwrap() as $typ;
-            )*
-            intval
-        }
-    };
+fn inter<T>(hexes: Vec<char>) -> T
+where T: TryFrom<u32>, <T as TryFrom<u32>>::Error: Debug
+{
+    let mut intval: u32 = 0;
+    for i in hexes {
+        intval = (intval*16) + i.to_digit(16).unwrap();
+    }
+    intval.try_into().unwrap()
+}
+
+fn dehex(chr: char) -> usize {
+    chr.to_digit(16).unwrap() as usize
 }
 
 impl Emulator {
@@ -39,114 +41,114 @@ impl Emulator {
 
                 // jump
                 ('1',n1,n2,n3) => {
-                    self.pc = intify!(u16, n1,n2,n3);
+                    self.pc = inter(vec![n1,n2,n3]);
                 },
 
                 // set register value
                 ('6',x,n1,n2) => {
-                    self.registers[intify!(usize, x)] = intify!(u8, n1,n2)
+                    self.registers[dehex(x)] = inter(vec![n1,n2]);
                 }
 
                 // add value to register
                 ('7',x,n1,n2) => {
-                    let regind = intify!(usize, x);
-                    self.registers[regind] = self.registers[regind].overflowing_add(intify!(u8, n1,n2)).0;
+                    let regind = dehex(x);
+                    self.registers[regind] = self.registers[regind].overflowing_add(inter(vec![n1,n2])).0;
                 }
 
                 // set value of i register
                 ('a',n1,n2,n3) => {
-                    self.i = intify!(u16, n1,n2,n3);
+                    self.i = inter(vec![n1,n2,n3]);
                 }
 
                 // draw
                 ('d',x,y, n) => {
-                    self.draw(intify!(u16, x), intify!(u16, y), intify!(u16, n))
+                    self.draw(inter(vec![x]), inter(vec![y]), inter(vec![n]))
                 }
 
                 // skip if x == nn
                 ('3',x,n1,n2) => {
-                    if self.registers[intify!(usize, x)] == intify!(u8, n1, n2) {
+                    if self.registers[dehex(x)] == inter(vec![n1,n2]) {
                         self.pc += 2;
                     }
                 }
 
                 // skip if x != nn
                 ('4',x,n1,n2) => {
-                    if self.registers[intify!(usize, x)] != intify!(u8, n1, n2) {
+                    if self.registers[dehex(x)] != inter(vec![n1,n2]) {
                         self.pc += 2;
                     }
                 }
 
                 //skip if vx == vy
                 ('5',x,y, '0') => {
-                    if self.registers[intify!(usize, x)] == self.registers[intify!(usize, y)] {
+                    if self.registers[dehex(x)] == self.registers[dehex(y)] {
                         self.pc += 2;
                     }
                 }
 
                 //skip if vx != vy
                 ('9',x,y, '0') => {
-                    if self.registers[intify!(usize, x)] != self.registers[intify!(usize, y)] {
+                    if self.registers[dehex(x)] != self.registers[dehex(y)] {
                         self.pc += 2;
                     }
                 }
 
                 // vx = vy
                 ('8',x,y,'0') =>{
-                    self.registers[intify!(usize, x)] = self.registers[intify!(usize, y)]
+                    self.registers[dehex(x)] = self.registers[dehex(y)]
                 }
 
                 // vx | vy
                 ('8',x,y,'1') =>{
-                    self.registers[intify!(usize, x)] |= self.registers[intify!(usize, y)]
+                    self.registers[dehex(x)] |= self.registers[dehex(y)]
                 }
 
                 // vx & vy
                 ('8',x,y,'2') =>{
-                    self.registers[intify!(usize, x)] &= self.registers[intify!(usize, y)]
+                    self.registers[dehex(x)] &= self.registers[dehex(y)]
                 }
 
                 // vx ^ vy
                 ('8',x,y,'3') => {
-                    self.registers[intify!(usize, x)] ^= self.registers[intify!(usize, y)]
+                    self.registers[dehex(x)] ^= self.registers[dehex(y)]
                 }
 
                 // vx += vy
                 ('8',x,y,'4') => {
-                    let sum = self.registers[intify!(usize,x)].overflowing_add(self.registers[intify!(usize,y)]);
-                    self.registers[intify!(usize,x)] = sum.0;
+                    let sum = self.registers[dehex(x)].overflowing_add(self.registers[dehex(y)]);
+                    self.registers[dehex(x)] = sum.0;
                     self.registers[15] = sum.1 as u8;
                 }
 
                 // vx -= vy
                 ('8',x,y,'5') => {
-                    let diff = self.registers[intify!(usize,x)].overflowing_sub(self.registers[intify!(usize,y)]);
-                    self.registers[intify!(usize,x)] = diff.0;
+                    let diff = self.registers[dehex(x)].overflowing_sub(self.registers[dehex(y)]);
+                    self.registers[dehex(x)] = diff.0;
                     self.registers[15] = diff.1 as u8;
                 }
 
                 // vx = vy - vx
                 ('8',x,y,'7') => {
-                    let diff = self.registers[intify!(usize,y)].overflowing_sub(self.registers[intify!(usize,x)]);
-                    self.registers[intify!(usize,x)] = diff.0;
+                    let diff = self.registers[dehex(y)].overflowing_sub(self.registers[dehex(x)]);
+                    self.registers[dehex(x)] = diff.0;
                     self.registers[15] = diff.1 as u8;
                 }
 
                 // vx = vy>>1
                 ('8',x,y,'6') => {
-                    let shifted_out = intify!(u8,y) & 1;
-                    self.registers[intify!(usize,x)] = self.registers[intify!(usize,y)] >> 1;
+                    let shifted_out = inter::<u8>(vec![y]) & 1;
+                    self.registers[dehex(x)] = self.registers[dehex(y)] >> 1;
                     self.registers[15] = shifted_out;
                 }
                 
                 // vx = vy<<1
                 ('8',x,y,'e') => {
-                    self.registers[intify!(usize,x)] = self.registers[intify!(usize, y)] << 1;
+                    self.registers[dehex(x)] = self.registers[dehex(y)] << 1;
                 }
 
                 // decimal version of values
                 ('f',x,'3','3') => {
-                    let mut regval = self.registers[intify!(usize, x)];
+                    let mut regval: u8 = self.registers[dehex(x)];
                     for i in 0..3 {
                         self.memory[(self.i + (2-i)) as usize] = regval%10;
                         regval /= 10;
@@ -155,7 +157,7 @@ impl Emulator {
 
                 // set memory to register values
                 ('f',x,'5','5') => {
-                    for i in 0..(intify!(usize, x)+1) {
+                    for i in 0..(dehex(x)+1) {
                         self.memory[self.i as usize + i] = self.registers[i];
                     }
                 }
@@ -163,7 +165,7 @@ impl Emulator {
                 // execute subroutine
                 ('2',n1,n2,n3) => {
                     self.stack.push_back(self.pc);
-                    self.pc = intify!(u16, n1,n2,n3);
+                    self.pc = inter(vec![n1,n2,n3])
                     
                 }
 
@@ -175,7 +177,7 @@ impl Emulator {
                 // fill registers
                 ('f',x,'6','5') => {
                     let mut ival = self.i as usize;
-                    for regind in 0..(intify!(usize, x)+1) {
+                    for regind in 0..(dehex(x)+1) {
                         self.registers[regind] = self.memory[ival];
                         ival += 1;
                     }
@@ -183,13 +185,13 @@ impl Emulator {
 
                 //jump with offset
                 ('b',n1,n2,n3) => {
-                    self.pc = intify!(u16, n1,n2,n3) + self.registers[0] as u16;
+                    self.pc = inter::<u16>(vec![n1,n2,n3]) + self.registers[0] as u16;
                 }
 
                 // random number
                 ('c',x,n1,n2) => {
-                    // self.registers[intify!(usize,x)] = thread_rng().gen_range(0..u8::MAX) & intify!(u8, n1,n2)
-                    self.registers[intify!(usize,x)] = fastrand::u8(0..u8::MAX) & intify!(u8, n1,n2);
+                    // self.registers[dehex(x)] = thread_rng().gen_range(0..u8::MAX) & intify!(u8, n1,n2)
+                    self.registers[dehex(x)] = fastrand::u8(0..u8::MAX) & inter::<u8>(vec![n1,n2]);
                 }
 
                 // no matches?
