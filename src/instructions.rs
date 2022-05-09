@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::emulator::Emulator;
 // use rand::{thread_rng, Rng};
 
-fn inter<T>(hexes: Vec<char>) -> T
+fn dehexmul<T>(hexes: Vec<char>) -> T
 where T: TryFrom<u32>, <T as TryFrom<u32>>::Error: Debug
 {
     let mut intval: u32 = 0;
@@ -41,40 +41,40 @@ impl Emulator {
 
                 // jump
                 ('1',n1,n2,n3) => {
-                    self.pc = inter(vec![n1,n2,n3]);
+                    self.pc = dehexmul(vec![n1,n2,n3]);
                 },
 
                 // set register value
                 ('6',x,n1,n2) => {
-                    self.registers[dehex(x)] = inter(vec![n1,n2]);
+                    self.registers[dehex(x)] = dehexmul(vec![n1,n2]);
                 }
 
                 // add value to register
                 ('7',x,n1,n2) => {
                     let regind = dehex(x);
-                    self.registers[regind] = self.registers[regind].overflowing_add(inter(vec![n1,n2])).0;
+                    self.registers[regind] = self.registers[regind].overflowing_add(dehexmul(vec![n1,n2])).0;
                 }
 
                 // set value of i register
                 ('a',n1,n2,n3) => {
-                    self.i = inter(vec![n1,n2,n3]);
+                    self.i = dehexmul(vec![n1,n2,n3]);
                 }
 
                 // draw
                 ('d',x,y, n) => {
-                    self.draw(inter(vec![x]), inter(vec![y]), inter(vec![n]))
+                    self.draw(dehexmul(vec![x]), dehexmul(vec![y]), dehexmul(vec![n]))
                 }
 
                 // skip if x == nn
                 ('3',x,n1,n2) => {
-                    if self.registers[dehex(x)] == inter(vec![n1,n2]) {
+                    if self.registers[dehex(x)] == dehexmul(vec![n1,n2]) {
                         self.pc += 2;
                     }
                 }
 
                 // skip if x != nn
                 ('4',x,n1,n2) => {
-                    if self.registers[dehex(x)] != inter(vec![n1,n2]) {
+                    if self.registers[dehex(x)] != dehexmul(vec![n1,n2]) {
                         self.pc += 2;
                     }
                 }
@@ -136,7 +136,7 @@ impl Emulator {
 
                 // vx = vy>>1
                 ('8',x,y,'6') => {
-                    let shifted_out = inter::<u8>(vec![y]) & 1;
+                    let shifted_out = dehexmul::<u8>(vec![y]) & 1;
                     self.registers[dehex(x)] = self.registers[dehex(y)] >> 1;
                     self.registers[15] = shifted_out;
                 }
@@ -165,7 +165,7 @@ impl Emulator {
                 // execute subroutine
                 ('2',n1,n2,n3) => {
                     self.stack.push_back(self.pc);
-                    self.pc = inter(vec![n1,n2,n3])
+                    self.pc = dehexmul(vec![n1,n2,n3])
                     
                 }
 
@@ -185,13 +185,13 @@ impl Emulator {
 
                 //jump with offset
                 ('b',n1,n2,n3) => {
-                    self.pc = inter::<u16>(vec![n1,n2,n3]) + self.registers[0] as u16;
+                    self.pc = dehexmul::<u16>(vec![n1,n2,n3]) + self.registers[0] as u16;
                 }
 
                 // random number
                 ('c',x,n1,n2) => {
                     // self.registers[dehex(x)] = thread_rng().gen_range(0..u8::MAX) & intify!(u8, n1,n2)
-                    self.registers[dehex(x)] = fastrand::u8(0..u8::MAX) & inter::<u8>(vec![n1,n2]);
+                    self.registers[dehex(x)] = fastrand::u8(0..u8::MAX) & dehexmul::<u8>(vec![n1,n2]);
                 }
 
                 // no matches?
